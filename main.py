@@ -16,8 +16,10 @@
 #
 import webapp2
 import re
+import cgi
 
-userform = """
+userform = """<!DOCTYPE html><html>
+<head>
 <form method="post">
 <h1>Signup</h1>
 <table>
@@ -68,8 +70,20 @@ userform = """
 
   <input type="submit">
 </form>
+</head>
+</html>
 """
 
+WelcomeUser = """
+<!DOCTYPE html><html>
+<head>
+<title>Welcome</title>
+</head>
+<body>
+<h2>Welcome %(username)s!</h2>
+</body>
+</html>
+"""
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -83,18 +97,21 @@ EMAIL_RE = re.compile(r"^[\S]+@[\S]+\.[\S]+$")
 def valid_email(email):
     return EMAIL_RE.match(email)
 
+def escape_html(s):
+   return cgi.escape(s,quote = True)
+
 class MainHandler(webapp2.RequestHandler):
 #main user-sign up page and renders back here if errors
     def writeForm(self,username="",password="",verify="",email="",errorUsername="",errorPassword="",errorVerify="",errorEmail=""):
         self.response.write(userform%{
-                                        "username":(username),
-                                        "password":(password),
-                                        "verify":(verify),
-                                        "email":(email),
-                                        "errorUsername":(errorUsername),
-                                        "errorPassword":(errorPassword),
-                                        "errorVerify":(errorVerify),
-                                        "errorEmail":(errorEmail)})
+                                        "username":escape_html(username),
+                                        "password":escape_html(password),
+                                        "verify":escape_html(verify),
+                                        "email":escape_html(email),
+                                        "errorUsername":escape_html(errorUsername),
+                                        "errorPassword":escape_html(errorPassword),
+                                        "errorVerify":escape_html(errorVerify),
+                                        "errorEmail":escape_html(errorEmail)})
 
     def get(self):
         self.writeForm()
@@ -123,15 +140,17 @@ class MainHandler(webapp2.RequestHandler):
                 errorEmail = "That\'s not a real email, you can\'t trick me!"
             if not password == verify:
                 errorVerify = "Your passwords don\'t match...come on, you just typed it 2 seconds ago..."
-            self.writeForm(username,password,verify,email,errorUsername,errorPassword,errorVerify,errorEmail)
+            self.writeForm(username,"","",email,errorUsername,errorPassword,errorVerify,errorEmail)
 
         else:
-            self.response.write("Welcome" + username)
+            self.redirect("/welcome")
 
 
-
+class WelcomeUserHandler(webapp2.RequestHandler):
+    def get(self):
+        username = self.request.get('username')
+        self.response.write(WelcomeUser%{'username':username})
 
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
-], debug=True)
+    ('/', MainHandler),('/welcome',WelcomeUserHandler)], debug=True)
