@@ -143,13 +143,14 @@ class MainHandler(webapp2.RequestHandler):
             self.writeForm(username,"","",email,errorUsername,errorPassword,errorVerify,errorEmail)
 
         else:
-            self.redirect("/welcome")
+            self.redirect('/welcome?username=' + username)
 
 
 class WelcomeUserHandler(webapp2.RequestHandler):
     def get(self):
         username = self.request.get('username')
         self.response.write(WelcomeUser%{'username':username})
+        return
 
 
 app = webapp2.WSGIApplication([
